@@ -6,35 +6,87 @@
     <title>Web Audio Control Center</title>
     <style>
      body {
-       font-family: 'Inter', 'Segoe UI', sans-serif;
-       background: #121212; color: #eee; display: flex;
-       flex-direction: column; align-items: center;
-       justify-content: center; min-height: 100vh;
+       font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+       background: #cbd5e0;
+       color: #2d3748; 
+       display: flex;
+       flex-direction: column; 
+       align-items: center;
+       justify-content: center; 
+       min-height: 100vh;
        margin: 0;
      }
+
      .container {
-       background: #1e1e1e; padding: 40px; border-radius: 16px;
-       box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #333;
-       width: fit-content; max-width: 600px; text-align: center;
+       background: #ffffff; 
+       padding: 40px; 
+       border-radius: 20px;
+       box-shadow: 0 20px 60px rgba(0,0,0,0.15); 
+       border: 1px solid rgba(0,0,0,0.05);
+       width: 90%; 
+       max-width: 500px; 
+       text-align: center;
      }
-     h1 { color: #00a86b; font-size: 1.8em; margin-bottom: 30px;
-       border-bottom: 2px solid #333; padding-bottom: 15px;
+
+     h1 { 
+       color: #1a202c;
+       font-size: 1.6em; 
+       margin-bottom: 30px;
+       border-bottom: 2px solid #edf2f7; 
+       padding-bottom: 15px;
+       letter-spacing: -0.5px;
+       font-weight: 800;
      }
 
      .tool-link {
-       display: flex; align-items: flex-start; text-decoration: none;
-       color: inherit; background: #2a2a2a; padding: 20px;
-       border-radius: 10px; margin-bottom: 20px;
-       transition: transform 0.2s, background 0.2s;
-       border: 1px solid transparent; text-align: left;
+       display: flex; 
+       align-items: center; 
+       text-decoration: none;
+       color: inherit; 
+       background: #f8fafc; 
+       padding: 20px;
+       border-radius: 12px; 
+       margin-bottom: 16px;
+       transition: all 0.2s ease;
+       border: 1px solid #e2e8f0; 
+       text-align: left;
      }
-     .tool-link:hover { transform: translateY(-3px); background: #333; border-color: #00a86b; }
 
-     .icon { font-size: 2.5em; margin-right: 20px; min-width: 60px; text-align: center; }
-     .details h2 { margin: 0 0 5px 0; font-size: 1.2em; color: #00cf83; }
-     .details p { margin: 0; font-size: 0.9em; color: #aaa; line-height: 1.5; }
+     .tool-link:hover { 
+       transform: translateY(-4px); 
+       background: #fff; 
+       border-color: #1a202c; 
+       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2); 
+     }
 
-     .footer { margin-top: 20px; font-size: 0.8em; color: #555; font-family: monospace; }
+     .icon { 
+       font-size: 2.2em; 
+       margin-right: 20px; 
+       min-width: 50px; 
+       text-align: center;
+     }
+
+     .details h2 { 
+       margin: 0 0 4px 0; 
+       font-size: 1.15em; 
+       color: #2d3748;
+       font-weight: 700;
+     }
+
+     .details p { 
+       margin: 0; 
+       font-size: 0.88em; 
+       color: #4a5568; 
+       line-height: 1.5; 
+     }
+
+     .footer { 
+       margin-top: 25px; 
+       font-size: 0.75em; 
+       color: #718096; 
+       font-family: 'SFMono-Regular', Consolas, monospace; 
+       letter-spacing: 0.5px;
+     }
     </style>
   </head>
   <body>
@@ -46,7 +98,7 @@
         <div class="icon">🎚️</div>
         <div class="details">
           <h2>Routing & Meter</h2>
-          <p>Visualizes each input channel and allows routing to any desired output. Perfect for patching and monitoring with devices like the AG-06 or UMC1820.</p>
+          <p>Visualizes input channels and manages routing. Perfect for monitoring AG-06 or UMC1820.</p>
         </div>
       </a>
 
@@ -54,13 +106,10 @@
         <div class="icon">🎹</div>
         <div class="details">
           <h2>8ch Output Tester</h2>
-          <p>Confirm multi-channel output functionality. Plays a scale from CH 1 to 8 to verify physical wiring and connections.</p>
+          <p>Confirm multi-channel output functionality by playing scales from CH 1 to 8.</p>
         </div>
       </a>
 
-      <div class="footer">
-        Devices: UMC1820 / AG-06 / WASAPI / Core Audio
-      </div>
     </div>
 
   </body>
