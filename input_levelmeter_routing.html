@@ -325,6 +325,7 @@
          outMerger.connect(audioCtx.destination);
 
          const meters = [];
+         const host_path = `//${window.location.hostname}:${window.location.port}${window.location.pathname.split('/').slice(0, -1).join('/')}`
 
          for (let i = 0; i < inChannels; i++) {
            const preGain = audioCtx.createGain();
@@ -350,19 +351,19 @@
                         <div class="eq-static-section">
                             <div class="eq-row">
                                 <label>Gain <span id="txt-gain-${i}">0dB</span></label>
-                                <webaudio-knob src="./../knobs/SimpleFlat3.png" id="gain-${i}" min="-20" max="20" step="1" value="0" diameter="65"></webaudio-knob>
+                                <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3.png" id="gain-${i}" min="-20" max="20" step="1" value="0" diameter="65"></webaudio-knob>
                             </div>
                             <div class="eq-row">
                                 <label>Hi <span id="txt-hi-${i}">0dB</span></label>
-                                <webaudio-knob src="./../knobs/SimpleFlat3.png" id="hi-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
+                                <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3.png" id="hi-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
                             </div>
                             <div class="eq-row">
                                 <label>Mid <span id="txt-mid-${i}">0dB</span></label>
-                                <webaudio-knob src="./../knobs/SimpleFlat3.png" id="mid-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
+                                <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3.png" id="mid-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
                             </div>
                             <div class="eq-row">
                                 <label>Low <span id="txt-low-${i}">0dB</span></label>
-                                <webaudio-knob src="./../knobs/SimpleFlat3.png" id="low-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
+                                <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3.png" id="low-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
                             </div>
                         </div>
                         <div class="meter-bg" id="meter-bg-${i}">
