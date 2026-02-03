@@ -2,7 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8">
-    <title>High-Visibility Audio Router v3 + EQ & Snappy Mute</title>
+    <title>High-Visibility Audio Router v3.2 + Snap Reset</title>
     <style>
      body {
        font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -72,11 +72,10 @@
        font-size: 14px;
        outline: none;
      }
-    
+
      select { background: #f8fafc; color: #2d3748; cursor: pointer; }
      select:focus { border-color: #1a202c; background: #fff; }
 
-     /* 一般ボタン（Start等）のホバー */
      button {
        background: #1a202c;
        color: white;
@@ -175,7 +174,8 @@
 
      .meter-fill {
        position: absolute; width: 100%; height: 100%;
-       background: linear-gradient(to top, #2ecc71 0%, #2ecc71 75%, #f1c40f 75%, #f1c40f 92%, #e74c3c 92%, #e74c3c 100%);
+       background: linear-gradient(to top, #e2ee82 0%, #ecfb47 75%, #ffee3a 75%, #f1c40f 92%, #febb50 92%, #e74c3c 100%);
+       /*background: linear-gradient(to top, #2ecc71 0%, #2ecc71 75%, #f1c40f 75%, #f1c40f 92%, #e74c3c 92%, #e74c3c 100%);*/
        clip-path: inset(100% 0 0 0);
        transition: clip-path 0.02s linear;
      }
@@ -192,7 +192,6 @@
        text-align: center;
      }
 
-     /* Muteボタン独自のスタイル (全体設定を打ち消し) */
      .mute-btn {
        width: 65px;
        padding: 4px 0;
@@ -203,31 +202,14 @@
        cursor: pointer;
        text-transform: uppercase;
        background: #edf2f7;
-       color: #1a202c;     
+       color: #1a202c;      
        transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
        outline: none;
      }
 
-     .mute-btn:hover {
-       background: #edf2f7;
-       color: #e53e3e;
-       border-color: #e53e3e;
-       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-     }
-
-     .mute-btn.is-muted {
-       background: #e53e3e;
-       color: #ffffff;
-       border-color: #e53e3e;
-       box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-     }
-
-     .mute-btn.is-muted:hover {
-       background: #e53e3e;
-       border-color: #c53030;
-       color: #ffffff;
-     }
+     .mute-btn:hover { background: #edf2f7; color: #e53e3e; border-color: #e53e3e; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+     .mute-btn.is-muted { background: #e53e3e; color: #ffffff; border-color: #e53e3e; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
 
      .route-select {
        width: 100%;
@@ -293,11 +275,8 @@
        }
 
        audioCtx = new AudioContext({ latencyHint: 'interactive' });
-      
        const outDeviceId = outputSelect.value;
-       if (outDeviceId && typeof audioCtx.setSinkId === 'function') {
-         await audioCtx.setSinkId(outDeviceId);
-       }
+       if (outDeviceId && typeof audioCtx.setSinkId === 'function') { await audioCtx.setSinkId(outDeviceId); }
 
        const outMaxChannels = audioCtx.destination.maxChannelCount;
        audioCtx.destination.channelCount = outMaxChannels;
@@ -308,9 +287,7 @@
            audio: {
              deviceId: { exact: inputSelect.value },
              channelCount: 32,
-             echoCancellation: false,
-             noiseSuppression: false,
-             autoGainControl: false
+             echoCancellation: false, noiseSuppression: false, autoGainControl: false
            }
          });
 
@@ -329,9 +306,9 @@
 
          for (let i = 0; i < inChannels; i++) {
            const preGain = audioCtx.createGain();
-           const highFilter = audioCtx.createBiquadFilter(); highFilter.type = 'highshelf'; highFilter.frequency.value = 3200;
-           const midFilter = audioCtx.createBiquadFilter(); midFilter.type = 'peaking'; midFilter.frequency.value = 1000;
-           const lowFilter = audioCtx.createBiquadFilter(); lowFilter.type = 'lowshelf'; lowFilter.frequency.value = 320;
+           const highFilter = audioCtx.createBiquadFilter(); highFilter.type = 'highshelf'; highFilter.frequency.value = 10000;
+           const midFilter = audioCtx.createBiquadFilter(); midFilter.type = 'peaking'; midFilter.frequency.value = 2500;
+           const lowFilter = audioCtx.createBiquadFilter(); lowFilter.type = 'lowshelf'; lowFilter.frequency.value = 100;
            const channelGain = audioCtx.createGain();
            const analyser = audioCtx.createAnalyser();
            analyser.fftSize = 512;
@@ -347,32 +324,32 @@
            const wrapper = document.createElement('div');
            wrapper.className = 'channel-wrapper';
            wrapper.innerHTML = `
-                        <div class="label">IN ${i + 1}</div>
-                        <div class="eq-static-section">
-                            <div class="eq-row">
-                                <label>Gain <span id="txt-gain-${i}">0dB</span></label>
-                                <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3.png" id="gain-${i}" min="-20" max="20" step="1" value="0" diameter="65"></webaudio-knob>
-                            </div>
-                            <div class="eq-row">
-                                <label>Hi <span id="txt-hi-${i}">0dB</span></label>
-                                <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3.png" id="hi-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
-                            </div>
-                            <div class="eq-row">
-                                <label>Mid <span id="txt-mid-${i}">0dB</span></label>
-                                <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3.png" id="mid-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
-                            </div>
-                            <div class="eq-row">
-                                <label>Low <span id="txt-low-${i}">0dB</span></label>
-                                <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3.png" id="low-${i}" min="-12" max="12" step="1" value="0" diameter="65"></webaudio-knob>
-                            </div>
-                        </div>
-                        <div class="meter-bg" id="meter-bg-${i}">
-                            <div class="meter-fill" id="fill-${i}"></div>
-                        </div>
-                        <div class="db-value" id="val-${i}">-inf</div>
-                        <button class="mute-btn" id="mute-btn-${i}">Mute</button>
-                        <select class="route-select" id="route-${i}"></select>
-                    `;
+                <div class="label">IN ${i + 1}</div>
+                <div class="eq-static-section">
+                    <div class="eq-row">
+                        <label>Gain <span id="txt-gain-${i}">0dB</span></label>
+                        <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3-White.png" id="gain-${i}" min="-6" max="64" step="1" value="0" diameter="65"></webaudio-knob>
+                    </div>
+                    <div class="eq-row">
+                        <label>Hi <span id="txt-hi-${i}">0dB</span></label>
+                        <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3-Green.png" id="hi-${i}" min="-15" max="15" step="1" value="0" diameter="65"></webaudio-knob>
+                    </div>
+                    <div class="eq-row">
+                        <label>Mid <span id="txt-mid-${i}">0dB</span></label>
+                        <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3-Green.png" id="mid-${i}" min="-15" max="15" step="1" value="0" diameter="65"></webaudio-knob>
+                    </div>
+                    <div class="eq-row">
+                        <label>Low <span id="txt-low-${i}">0dB</span></label>
+                        <webaudio-knob src="${host_path}/js/knobs/SimpleFlat3-Green.png" id="low-${i}" min="-15" max="15" step="1" value="0" diameter="65"></webaudio-knob>
+                    </div>
+                </div>
+                <div class="meter-bg" id="meter-bg-${i}">
+                    <div class="meter-fill" id="fill-${i}"></div>
+                </div>
+                <div class="db-value" id="val-${i}">-inf</div>
+                <button class="mute-btn" id="mute-btn-${i}">Mute</button>
+                <select class="route-select" id="route-${i}"></select>
+            `;
            container.appendChild(wrapper);
 
            const routeSelect = document.getElementById(`route-${i}`);
@@ -384,14 +361,9 @@
            routeSelect.innerHTML = opts;
 
            let isMutedByBtn = false;
-
            const updateMuteState = () => {
              const isNoneRouted = routeSelect.value === "-1";
-             if (isMutedByBtn || isNoneRouted) {
-               meterBg.classList.add('muted');
-             } else {
-               meterBg.classList.remove('muted');
-             }
+             meterBg.classList.toggle('muted', isMutedByBtn || isNoneRouted);
              const targetGain = (isMutedByBtn || isNoneRouted) ? 0 : 1;
              channelGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.01);
            };
@@ -402,12 +374,8 @@
              updateMuteState();
            };
 
-           if (i < outMaxChannels) {
-             routeSelect.value = i;
-             channelGain.connect(outMerger, 0, i);
-           } else {
-             routeSelect.value = "-1";
-           }
+           if (i < outMaxChannels) { routeSelect.value = i; channelGain.connect(outMerger, 0, i); }
+           else { routeSelect.value = "-1"; }
            updateMuteState();
 
            routeSelect.onchange = () => {
@@ -420,8 +388,8 @@
            const bindKnob = (id, param, txtId, isGain = false) => {
              const s = document.getElementById(id);
              const t = document.getElementById(txtId);
-             s.oninput = (e) => {
-               const val = parseFloat(e.target.value);
+
+             const updateValue = (val) => {
                if (isGain) {
                  const linearGain = Math.pow(10, val / 20);
                  param.setTargetAtTime(linearGain, audioCtx.currentTime, 0.01);
@@ -429,6 +397,13 @@
                  param.setTargetAtTime(val, audioCtx.currentTime, 0.01);
                }
                t.innerText = `${val > 0 ? '+' : ''}${val}dB`;
+             };
+
+             s.oninput = (e) => updateValue(parseFloat(e.target.value));
+
+             s.ondblclick = () => {
+               s.value = 0;
+               updateValue(0);
              };
            };
 
