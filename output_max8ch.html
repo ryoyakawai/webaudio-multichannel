@@ -2,205 +2,69 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8">
-    <title>Output 8ch Tester | Web Audio Toolset</title>
+    <title>10ch Output Master | Dynamic UI</title>
     <style>
-     body {
-       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-       background: #cbd5e0;
-       color: #2d3748;
-       margin: 0;
-       display: flex;
-       flex-direction: column;
-       align-items: center;
-       justify-content: center;
-       min-height: 100vh;
-       padding: 40px 20px;
-       box-sizing: border-box;
-     }
+     body { font-family: 'Inter', system-ui, sans-serif; background: #cbd5e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+     .container { background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); width: 95%; max-width: 900px; }
+     h3 { border-bottom: 2px solid #edf2f7; padding-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; margin-top: 0; }
 
-     .home-btn {
-       position: absolute;
-       top: 20px;
-       left: 20px;
-       text-decoration: none;
-       color: #1a202c;
-       background: #fff;
-       padding: 10px 20px;
-       border-radius: 8px;
-       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-       transition: all 0.2s;
-       border: 1px solid #e2e8f0;
-       font-weight: 800;
-       text-transform: uppercase;
-       letter-spacing: 1px;
-       font-size: 0.8em;
-     }
-     .home-btn:hover {
-       border-color: #1a202c;
-       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-     }
-
-     .container {
-       background: #ffffff;
-       padding: 30px;
-       border-radius: 16px;
-       box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-       width: 100%;
-       max-width: 650px;
-       border: 1px solid rgba(0,0,0,0.05);
-       margin-bottom: 20px;
-     }
-
-     h3 {
-       margin-top: 0;
-       color: #1a202c;
-       font-size: 1.1em;
-       border-bottom: 2px solid #edf2f7;
-       padding-bottom: 12px;
-       margin-bottom: 20px;
-       text-transform: uppercase;
-       letter-spacing: 1px;
-       font-weight: 800;
-     }
-
-     /* 囲いを削除し、シンプルなステータステキストに変更 */
-     .info {
-       font-size: 0.85em;
-       color: #718096;
-       margin-bottom: 25px;
-       font-family: 'JetBrains Mono', monospace;
-       font-weight: 800;
-       display: block;
-       text-align: left;
-       letter-spacing: 0.5px;
-     }
+     /* status panel */
+     .status-panel { background: #1a202c; color: #4fd1c5; padding: 15px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; margin-bottom: 20px; display: flex; justify-content: space-between; }
 
      .config-row { display: flex; gap: 15px; margin-bottom: 25px; align-items: flex-end; }
-     .input-group { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-     .input-group label { font-size: 11px; color: #718096; font-weight: 800; letter-spacing: 0.5px; }
+     .input-group { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+     .input-group label { font-size: 11px; font-weight: 800; color: #718096; }
 
-     select, button {
-       padding: 12px;
-       border-radius: 8px;
-       border: 1px solid #e2e8f0;
-       font-size: 14px;
-       outline: none;
-       transition: all 0.2s;
-     }
+     select, button { padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; outline: none; }
+     select { background: #f8fafc; cursor: pointer; }
+     button { background: #1a202c; color: white; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.2s; border: none; }
+     button:hover { background: #000; transform: translateY(-1px); }
+     button:disabled { background: #cbd5e0; cursor: not-allowed; transform: none; }
 
-     select {
-       background: #f8fafc;
-       color: #2d3748;
-       cursor: pointer;
-       width: 100%;
-     }
-     select:focus { border-color: #1a202c; background: #fff; }
+     /* style of table */
+     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
+     th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: center; }
+     th { background: #f8fafc; font-size: 10px; color: #4a5568; }
+     td { font-size: 13px; font-weight: bold; }
 
-     button {
-       background: #1a202c;
-       color: white;
-       font-weight: 800;
-       cursor: pointer;
-       border: none;
-       text-transform: uppercase;
-       letter-spacing: 1px;
-       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-     }
-     button:hover {
-       background: #000000;
-       box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-     }
-     button:disabled {
-       background: #cbd5e0;
-       color: #718096;
-       cursor: not-allowed;
-       box-shadow: none;
-     }
-
-     table {
-       border-collapse: collapse;
-       width: 100%;
-       background: #fff;
-       border-radius: 8px;
-       overflow: hidden;
-       border: 1px solid #e2e8f0;
-       margin-bottom: 10px;
-     }
-     th, td {
-       padding: 10px;
-       border: 1px solid #e2e8f0;
-       text-align: center;
-     }
-     th {
-       background: #f8fafc;
-       color: #1a202c;
-       font-size: 0.75em;
-       font-weight: 800;
-     }
-     td { font-size: 0.95em; font-weight: bold; }
-
+     /* Active / In-Active control */
      .disabled-cell { background-color: #f1f5f9 !important; color: #cbd5e0 !important; }
-     input[type="checkbox"] { transform: scale(1.3); cursor: pointer; accent-color: #1a202c; }
+     .disabled-cell input { opacity: 0.2; cursor: not-allowed; }
+     input[type="checkbox"] { transform: scale(1.4); cursor: pointer; accent-color: #1a202c; }
 
-     #error-msg {
-       color: #e53e3e;
-       margin-top: 15px;
-       font-weight: 800;
-       font-size: 0.85em;
-       min-height: 1.5em;
-       text-align: center;
-       text-transform: uppercase;
-     }
-
-     .hint {
-       font-size: 10px;
-       color: #a0aec0;
-       margin-top: 15px;
-       text-align: center;
-       font-weight: bold;
-     }
+     #error-log { color: #e53e3e; text-align: center; font-size: 12px; font-weight: bold; margin-top: 10px; min-height: 1.2em; }
     </style>
   </head>
   <body>
 
-    <a href="index.html" class="home-btn">Home</a>
-
     <div class="container">
-      <h3>8-Channel Output Tester</h3>
+      <h3>10-Channel Output Master</h3>
 
-      <div id="device-info" class="info">DEVICE MAX CHANNELS: --</div>
+      <div class="status-panel">
+        <span id="status-text">SYSTEM READY</span>
+        <span id="ch-info">DETECTED: -- CH</span>
+      </div>
 
       <div class="config-row">
         <div class="input-group">
-          <label>SELECT OUTPUT DEVICE</label>
+          <label>SELECT OUTPUT DEVICE (e.g. UMC1820)</label>
           <select id="device-list">
             <option value="">Default System Output</option>
           </select>
         </div>
-        <button id="refresh-devices" style="width: auto; padding: 12px 20px;">Refresh</button>
+        <button id="refresh-btn" style="width: auto;">Refresh List</button>
       </div>
 
-      <table id="scale-table">
-        <thead>
-          <tr id="header-row">
-            <th>Note</th>
-          </tr>
-        </thead>
-        <tbody id="scale-body"></tbody>
+      <table id="matrix-table">
+        <thead><tr id="h-row"><th>Note</th></tr></thead>
+        <tbody id="b-row"></tbody>
       </table>
 
-      <div style="margin-top: 25px;">
-        <button id="play" style="width: 100%; font-size: 1em; padding: 16px;">Play Selected Channels</button>
-        <div id="error-msg"></div>
-      </div>
-
-      <p class="hint">
-        IF DEVICES ARE MISSING, CLICK REFRESH OR PLAY ONCE TO GRANT PERMISSIONS.
-      </p>
+      <button id="play-btn" style="width: 100%; padding: 18px; font-size: 1.1em;">Play Selected Channels</button>
+      <div id="error-log"></div>
     </div>
 
     <script>
-     /* JavaScriptロジックは以前と同様 */
      const SCALE = [
        { label: "C (Do)",   freq: 261.63 },
        { label: "D (Re)",   freq: 293.66 },
@@ -211,117 +75,141 @@
        { label: "B (Si)",   freq: 493.88 },
        { label: "C5 (Do)",  freq: 523.25 }
      ];
-     const MAX_CH_NUM = 8;
+     const TARGET_MAX_CH = 10;
 
+     // 1. Update device list
      async function updateDeviceList() {
        const select = document.getElementById("device-list");
-       const currentSelection = select.value;
-       select.innerHTML = '<option value="">Default System Output</option>';
+       const current = select.value;
        try {
-         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-           const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
-           if (stream) stream.getTracks().forEach(t => t.stop());
-         }
+         // Used for permission prompt
+         const s = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+         if (s) s.getTracks().forEach(t => t.stop());
+
          const devices = await navigator.mediaDevices.enumerateDevices();
-         const outputs = devices.filter(d => d.kind === 'audiooutput');
-         outputs.forEach(device => {
-           const option = document.createElement("option");
-           option.value = device.deviceId;
-           option.text = device.label || `Speaker (${device.deviceId.slice(0, 5)})`;
-           if (device.deviceId === currentSelection) option.selected = true;
-           select.appendChild(option);
+         select.innerHTML = '<option value="">Default System Output</option>';
+         devices.filter(d => d.kind === 'audiooutput').forEach(d => {
+           const opt = document.createElement("option");
+           opt.value = d.deviceId;
+           opt.text = d.label || `Device ${d.deviceId.slice(0,5)}`;
+           if(d.deviceId === current) opt.selected = true;
+           select.appendChild(opt);
          });
-       } catch (err) { console.error(err); }
+       } catch (e) { console.error(e); }
      }
 
-     function initUI() {
-       const tempCtx = new AudioContext();
-       const maxCh = tempCtx.destination.maxChannelCount;
-       document.getElementById("device-info").innerText = `DEVICE MAX CHANNELS: ${maxCh}`;
+     // 2. Rebuild UI (Toggle Active/Inactive based on channel count)
+     function renderTable(activeChCount = 2) {
+       const hRow = document.getElementById("h-row");
+       const bRow = document.getElementById("b-row");
+       document.getElementById("ch-info").innerText = `DETECTED: ${activeChCount} CH`;
 
-       const headerRow = document.getElementById("header-row");
-       const scaleBody = document.getElementById("scale-body");
-
-       headerRow.innerHTML = '<th>Note</th>';
-       for (let i = 0; i < MAX_CH_NUM; i++) {
+       // Generate table header
+       hRow.innerHTML = '<th>Note</th>';
+       for (let i = 0; i < TARGET_MAX_CH; i++) {
          const th = document.createElement("th");
-         th.innerText = `CH ${i+1}`;
-         if (i >= maxCh) th.classList.add("disabled-cell");
-         headerRow.appendChild(th);
+         th.innerText = `CH ${i + 1}`;
+         if (i >= activeChCount) th.className = "disabled-cell";
+         hRow.appendChild(th);
        }
 
-       scaleBody.innerHTML = '';
-       SCALE.forEach((note) => {
+       // Generate table body
+       bRow.innerHTML = '';
+       SCALE.forEach(note => {
          const tr = document.createElement("tr");
          tr.innerHTML = `<td>${note.label}</td>`;
-         for (let ch = 0; ch < MAX_CH_NUM; ch++) {
+         for (let i = 0; i < TARGET_MAX_CH; i++) {
            const td = document.createElement("td");
-           const disabled = ch >= maxCh ? 'disabled' : '';
-           td.innerHTML = `<input type="checkbox" class="note-ch" data-freq="${note.freq}" data-ch="${ch}" ${disabled}>`;
-           if (ch >= maxCh) td.className = "disabled-cell";
+           const isInactive = i >= activeChCount;
+           if (isInactive) td.className = "disabled-cell";
+           td.innerHTML = `<input type="checkbox" class="ch-cb" data-f="${note.freq}" data-c="${i}" ${isInactive ? 'disabled' : ''}>`;
            tr.appendChild(td);
          }
-         scaleBody.appendChild(tr);
+         bRow.appendChild(tr);
        });
-       tempCtx.close();
      }
 
-     window.addEventListener("DOMContentLoaded", () => {
-       initUI();
-       updateDeviceList();
-       document.getElementById("refresh-devices").onclick = updateDeviceList;
-     });
+     // 3. Probe device capabilities on dropdown change
+     document.getElementById("device-list").onchange = async function() {
+       const deviceId = this.value;
+       const status = document.getElementById("status-text");
+       status.innerText = "PROBING DEVICE...";
 
-     document.getElementById("play").addEventListener("click", async function() {
-       const playButton = this;
-       const errorElement = document.getElementById("error-msg");
+       const probeCtx = new AudioContext({ sampleRate: 48000 });
+       try {
+         if (deviceId && probeCtx.setSinkId) {
+           await probeCtx.setSinkId(deviceId);
+         }
+         // Wait for OS recognition (handling potential lag)
+         await new Promise(r => setTimeout(r, 250));
+
+         const max = probeCtx.destination.maxChannelCount;
+         renderTable(max);
+         status.innerText = max > 2 ? "MULTI-CH MODE ACTIVE" : "STEREO MODE";
+       } catch (e) {
+         console.error(e);
+         status.innerText = "PROBE FAILED";
+       } finally {
+         probeCtx.close();
+       }
+     };
+
+     // 4. Playback processing
+     document.getElementById("play-btn").onclick = async function() {
+       const btn = this;
+       const log = document.getElementById("error-log");
        const deviceId = document.getElementById("device-list").value;
-       errorElement.innerText = "";
+       log.innerText = "";
 
-       const ctx = new AudioContext();
-       if (typeof ctx.setSinkId === 'function' && deviceId) {
-         try { await ctx.setSinkId(deviceId); } catch (err) {
-           errorElement.innerText = `⚠️ DEVICE SWITCH ERROR: ${err.message}`;
+       const ctx = new AudioContext({ sampleRate: 48000 });
+       try {
+         if (deviceId && ctx.setSinkId) await ctx.setSinkId(deviceId);
+         await new Promise(r => setTimeout(r, 100));
+
+         const max = ctx.destination.maxChannelCount;
+         ctx.destination.channelCount = max;
+         ctx.destination.channelCountMode = 'explicit';
+         ctx.destination.channelInterpretation = 'discrete';
+
+         const selections = document.querySelectorAll(".ch-cb:checked");
+         if (selections.length === 0) {
+           log.innerText = "SELECT AT LEAST ONE CHECKBOX.";
            ctx.close(); return;
          }
+
+         btn.disabled = true;
+         const merger = ctx.createChannelMerger(max);
+         merger.connect(ctx.destination);
+
+         const now = ctx.currentTime;
+         selections.forEach(cb => {
+           const osc = ctx.createOscillator();
+           const gain = ctx.createGain();
+           osc.frequency.value = parseFloat(cb.dataset.f);
+           gain.gain.setValueAtTime(0, now);
+           gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+           gain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+           osc.connect(gain);
+           gain.connect(merger, 0, parseInt(cb.dataset.c));
+           osc.start(now); osc.stop(now + 1.5);
+         });
+
+         setTimeout(() => { btn.disabled = false; ctx.close(); }, 1600);
+       } catch (e) {
+         log.innerText = `PLAYBACK ERROR: ${e.message}`;
+         btn.disabled = false;
+         ctx.close();
        }
+     };
 
-       const maxCh = ctx.destination.maxChannelCount;
-       ctx.destination.channelCount = maxCh;
-       ctx.destination.channelInterpretation = "discrete";
-
-       const merger = ctx.createChannelMerger(MAX_CH_NUM);
-       const selections = [];
-       let securityError = false;
-
-       document.querySelectorAll(".note-ch:checked").forEach(cb => {
-         const ch = Number(cb.dataset.ch);
-         if (ch >= maxCh) { securityError = true; return; }
-         selections.push({ freq: Number(cb.dataset.freq), channel: ch });
-       });
-
-       if (securityError || selections.length === 0) {
-         errorElement.innerText = securityError ? `⚠️ SELECTED DEVICE ONLY SUPPORTS ${maxCh}CH.` : "PLEASE SELECT AT LEAST ONE NOTE.";
-         ctx.close(); return;
-       }
-
-       playButton.disabled = true;
-       const now = ctx.currentTime;
-       selections.forEach(({freq, channel}) => {
-         const osc = ctx.createOscillator();
-         const gain = ctx.createGain();
-         osc.frequency.value = freq;
-         gain.gain.setValueAtTime(0, now);
-         gain.gain.linearRampToValueAtTime(0.15, now + 0.01);
-         gain.gain.setValueAtTime(0.15, now + 1.2);
-         gain.gain.linearRampToValueAtTime(0, now + 1.5);
-         osc.connect(gain);
-         gain.connect(merger, 0, channel);
-         osc.start(now); osc.stop(now + 1.5);
-       });
-       merger.connect(ctx.destination);
-       setTimeout(() => { playButton.disabled = false; ctx.close(); }, 1500);
-     });
+     // Initialization
+     window.onload = async () => {
+       await updateDeviceList();
+       const t = new AudioContext();
+       renderTable(t.destination.maxChannelCount);
+       t.close();
+     };
+     document.getElementById("refresh-btn").onclick = updateDeviceList;
     </script>
   </body>
 </html>
