@@ -75,8 +75,7 @@
        "stereo_mode": "STEREO MODE",
        "multi_ch_mode_active": "MULTI-CH MODE ACTIVE",
        "select_at_least_one_checkbox": "SELECT AT LEAST ONE CHECKBOX.",
-       "playback_error": "PLAYBACK ERROR",
-       "default_system_output": "Default System Output"
+       "playback_error": "PLAYBACK ERROR"
 
      }
      const SCALE = [
@@ -120,28 +119,6 @@
        } catch (err) {
          console.error("Failed to update device list:", err);
        }
-
-       /*
-       status.innerHTML = SYSTEM_STATUS_TEXT.update_device_list;
-       try {
-         // Used for permission prompt
-         const s = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
-         if (s) s.getTracks().forEach(t => t.stop());
-
-         const devices = await navigator.mediaDevices.enumerateDevices();
-         select.innerHTML = `<option value="">${SYSTEM_STATUS_TEXT.default_system_output}</option>`;
-         devices.filter(d => d.kind === 'audiooutput').forEach(d => {
-           const opt = document.createElement("option");
-           opt.value = d.deviceId;
-           opt.text = d.label || `Device ${d.deviceId.slice(0,5)}`;
-           if(d.deviceId === current) {
-             opt.selected = true;
-           }
-           select.appendChild(opt);
-         });
-         status.innerHTML = SYSTEM_STATUS_TEXT.system_ready;
-       } catch (e) { console.error(e); }
-*/
      }
 
      // 2. Rebuild UI (Toggle Active/Inactive based on channel count)
