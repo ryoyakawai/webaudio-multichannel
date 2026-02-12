@@ -182,35 +182,6 @@
      document.getElementById("device-list").onchange = async function() {
        await probeDeviceCapabilities({deviceId: this.value})
      }
-     /*
-     document.getElementById("device-list").onchange = async function() {
-       const deviceId = this.value;
-       const status = document.getElementById("status-text");
-       const statusCh = document.getElementById("status-ch-text")
-       status.innerText = SYSTEM_STATUS_TEXT.probing_device;
-
-       const probeCtx = new AudioContext({ sampleRate: SAMPLERATE });
-       try {
-         if (deviceId && probeCtx.setSinkId) {
-           await probeCtx.setSinkId(deviceId);
-         }
-         // Wait for OS recognition (handling potential lag)
-         await new Promise(r => setTimeout(r, 250));
-
-         const max = probeCtx.destination.maxChannelCount;
-         renderTable(max);
-         status.innerText = SYSTEM_STATUS_TEXT.system_ready
-         statusCh.innerText = max == 1 ? SYSTEM_STATUS_TEXT.single_channel_mode
-                            : max == 2 ? SYSTEM_STATUS_TEXT.stereo_mode
-                            : SYSTEM_STATUS_TEXT.multi_ch_mode_active;
-       } catch (e) {
-         console.error(e);
-         status.innerText = SYSTEM_STATUS_TEXT.probe_failed;
-       } finally {
-         probeCtx.close();
-       }
-     }
-     */
 
      // 4. Playback processing
      document.getElementById("play-btn").onclick = async function() {
