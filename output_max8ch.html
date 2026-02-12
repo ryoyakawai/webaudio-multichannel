@@ -41,7 +41,8 @@
       <h3>10-Channel Output Master</h3>
 
       <div class="status-panel">
-        <span id="status-text">SYSTEM READY</span>
+        <span id="status-text"></span>
+        <span id="status-ch-text"></span>
         <span id="ch-info">DETECTED: -- CH</span>
       </div>
 
@@ -49,7 +50,7 @@
         <div class="input-group">
           <label>SELECT OUTPUT DEVICE (e.g. UMC1820)</label>
           <select id="device-list">
-            <option value="">Default System Output</option>
+            <option value="">--</option>
           </select>
         </div>
         <button id="refresh-btn" style="width: auto;">Refresh List</button>
@@ -65,37 +66,82 @@
     </div>
 
     <script>
+     const SYSTEM_STATUS_TEXT = {
+       "system_ready": "SYSTEM READY",
+       "update_device_list": "UPDATING DEVICE LIST",
+       "probing_device": "PROBING DEVICE...",
+       "probe_failed": "PROBE FAILED",
+       "single_channel_mode": "SINGLE-CHANNEL MODE",
+       "stereo_mode": "STEREO MODE",
+       "multi_ch_mode_active": "MULTI-CH MODE ACTIVE",
+       "select_at_least_one_checkbox": "SELECT AT LEAST ONE CHECKBOX.",
+       "playback_error": "PLAYBACK ERROR",
+       "default_system_output": "Default System Output"
+
+     }
      const SCALE = [
-       { label: "C (Do)",   freq: 261.63 },
-       { label: "D (Re)",   freq: 293.66 },
-       { label: "E (Mi)",   freq: 329.63 },
-       { label: "F (Fa)", freq: 349.23 },
-       { label: "G (So)",   freq: 392.00 },
-       { label: "A (La)",   freq: 440.00 },
-       { label: "B (Si)",   freq: 493.88 },
-       { label: "C5 (Do)",  freq: 523.25 }
+       { label: "C (Do)",  freq: 261.63 },
+       { label: "D (Re)",  freq: 293.66 },
+       { label: "E (Mi)",  freq: 329.63 },
+       { label: "F (Fa)",  freq: 349.23 },
+       { label: "G (So)",  freq: 392.00 },
+       { label: "A (La)",  freq: 440.00 },
+       { label: "B (Si)",  freq: 493.88 },
+       { label: "C5 (Do)", freq: 523.25 }
      ];
      const TARGET_MAX_CH = 10;
+     const SAMPLERATE = 48000;
 
      // 1. Update device list
      async function updateDeviceList() {
        const select = document.getElementById("device-list");
+       const status = document.getElementById("status-text");
+       const statusCh = document.getElementById("status-ch-text")
        const current = select.value;
+
+       try {
+         // Trigger permission prompt
+         const s = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+         if (s) s.getTracks().forEach(t => t.stop());
+
+         const devices = await navigator.mediaDevices.enumerateDevices();
+
+         const optionsHtml = devices
+           .filter(d => d.kind === 'audiooutput')
+           .map(d => {
+             const isSelected = d.deviceId === current ? 'selected' : '';
+             const label = d.label || `Device ${d.deviceId.slice(0, 5)}`;
+             return `<option value="${d.deviceId}" ${isSelected}>${label}</option>`;
+           })
+           .join('');
+
+         select.innerHTML = optionsHtml;
+
+       } catch (err) {
+         console.error("Failed to update device list:", err);
+       }
+
+       /*
+       status.innerHTML = SYSTEM_STATUS_TEXT.update_device_list;
        try {
          // Used for permission prompt
          const s = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
          if (s) s.getTracks().forEach(t => t.stop());
 
          const devices = await navigator.mediaDevices.enumerateDevices();
-         select.innerHTML = '<option value="">Default System Output</option>';
+         select.innerHTML = `<option value="">${SYSTEM_STATUS_TEXT.default_system_output}</option>`;
          devices.filter(d => d.kind === 'audiooutput').forEach(d => {
            const opt = document.createElement("option");
            opt.value = d.deviceId;
            opt.text = d.label || `Device ${d.deviceId.slice(0,5)}`;
-           if(d.deviceId === current) opt.selected = true;
+           if(d.deviceId === current) {
+             opt.selected = true;
+           }
            select.appendChild(opt);
          });
+         status.innerHTML = SYSTEM_STATUS_TEXT.system_ready;
        } catch (e) { console.error(e); }
+*/
      }
 
      // 2. Rebuild UI (Toggle Active/Inactive based on channel count)
@@ -130,12 +176,12 @@
      }
 
      // 3. Probe device capabilities on dropdown change
-     document.getElementById("device-list").onchange = async function() {
-       const deviceId = this.value;
+     const probeDeviceCapabilities = async ({deviceId}) => {
        const status = document.getElementById("status-text");
-       status.innerText = "PROBING DEVICE...";
+       const statusCh = document.getElementById("status-ch-text")
+       status.innerText = SYSTEM_STATUS_TEXT.probing_device;
 
-       const probeCtx = new AudioContext({ sampleRate: 48000 });
+       const probeCtx = new AudioContext({ sampleRate: SAMPLERATE });
        try {
          if (deviceId && probeCtx.setSinkId) {
            await probeCtx.setSinkId(deviceId);
@@ -145,14 +191,49 @@
 
          const max = probeCtx.destination.maxChannelCount;
          renderTable(max);
-         status.innerText = max > 2 ? "MULTI-CH MODE ACTIVE" : "STEREO MODE";
+         status.innerText = SYSTEM_STATUS_TEXT.system_ready
+         statusCh.innerText = max == 1 ? SYSTEM_STATUS_TEXT.single_channel_mode
+                            : max == 2 ? SYSTEM_STATUS_TEXT.stereo_mode
+                            : SYSTEM_STATUS_TEXT.multi_ch_mode_active;
        } catch (e) {
          console.error(e);
-         status.innerText = "PROBE FAILED";
+         status.innerText = SYSTEM_STATUS_TEXT.probe_failed;
        } finally {
          probeCtx.close();
        }
-     };
+     }
+     document.getElementById("device-list").onchange = async function() {
+       await probeDeviceCapabilities({deviceId: this.value})
+     }
+     /*
+     document.getElementById("device-list").onchange = async function() {
+       const deviceId = this.value;
+       const status = document.getElementById("status-text");
+       const statusCh = document.getElementById("status-ch-text")
+       status.innerText = SYSTEM_STATUS_TEXT.probing_device;
+
+       const probeCtx = new AudioContext({ sampleRate: SAMPLERATE });
+       try {
+         if (deviceId && probeCtx.setSinkId) {
+           await probeCtx.setSinkId(deviceId);
+         }
+         // Wait for OS recognition (handling potential lag)
+         await new Promise(r => setTimeout(r, 250));
+
+         const max = probeCtx.destination.maxChannelCount;
+         renderTable(max);
+         status.innerText = SYSTEM_STATUS_TEXT.system_ready
+         statusCh.innerText = max == 1 ? SYSTEM_STATUS_TEXT.single_channel_mode
+                            : max == 2 ? SYSTEM_STATUS_TEXT.stereo_mode
+                            : SYSTEM_STATUS_TEXT.multi_ch_mode_active;
+       } catch (e) {
+         console.error(e);
+         status.innerText = SYSTEM_STATUS_TEXT.probe_failed;
+       } finally {
+         probeCtx.close();
+       }
+     }
+     */
 
      // 4. Playback processing
      document.getElementById("play-btn").onclick = async function() {
@@ -161,7 +242,7 @@
        const deviceId = document.getElementById("device-list").value;
        log.innerText = "";
 
-       const ctx = new AudioContext({ sampleRate: 48000 });
+       const ctx = new AudioContext({ sampleRate: SAMPLERATE });
        try {
          if (deviceId && ctx.setSinkId) await ctx.setSinkId(deviceId);
          await new Promise(r => setTimeout(r, 100));
@@ -173,7 +254,7 @@
 
          const selections = document.querySelectorAll(".ch-cb:checked");
          if (selections.length === 0) {
-           log.innerText = "SELECT AT LEAST ONE CHECKBOX.";
+           log.innerText = SYSTEM_STATUS_TEXT.select_at_least_one_checkbox;
            ctx.close(); return;
          }
 
@@ -196,7 +277,7 @@
 
          setTimeout(() => { btn.disabled = false; ctx.close(); }, 1600);
        } catch (e) {
-         log.innerText = `PLAYBACK ERROR: ${e.message}`;
+         log.innerText = `${SYSTEM_STATUS_TEXT.playback_error}: ${e.message}`;
          btn.disabled = false;
          ctx.close();
        }
@@ -208,6 +289,9 @@
        const t = new AudioContext();
        renderTable(t.destination.maxChannelCount);
        t.close();
+
+       const deviceId = document.getElementById("device-list").value;
+       await probeDeviceCapabilities({deviceId: deviceId})
      };
      document.getElementById("refresh-btn").onclick = updateDeviceList;
     </script>
