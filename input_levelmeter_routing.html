@@ -253,20 +253,73 @@
 
      let audioCtx;
      let animationId;
+     let currentMaxOutChannels = 2; // Always maintain the latest available channel count
 
+     // (Fix) Update device list and trigger initial probe
      async function refreshDevices() {
        try {
          const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
          tempStream.getTracks().forEach(t => t.stop());
          const devices = await navigator.mediaDevices.enumerateDevices();
-         const inputs = devices.filter(d => d.kind === 'audioinput');
-         const outputs = devices.filter(d => d.kind === 'audiooutput');
-         inputSelect.innerHTML = inputs.map(d => `<option value="${d.deviceId}">${d.label || 'Input'}</option>`).join('');
-         outputSelect.innerHTML = outputs.map(d => `<option value="${d.deviceId}">${d.label || 'Output'}</option>`).join('');
+
+         inputSelect.innerHTML = devices.filter(d => d.kind === 'audioinput')
+                                        .map(d => `<option value="${d.deviceId}">${d.label || 'Input'}</option>`).join('');
+         outputSelect.innerHTML = devices.filter(d => d.kind === 'audiooutput')
+                                         .map(d => `<option value="${d.deviceId}">${d.label || 'Output'}</option>`).join('');
+
+         await probeSelectedOutput(); // Check current device selection on init
        } catch (err) { console.error(err); }
      }
+
+     // Detailed probe function with error handling
+     async function probeSelectedOutput() {
+       const deviceId = outputSelect.value;
+       const probeCtx = new AudioContext();
+       try {
+         if (deviceId && probeCtx.setSinkId) {
+           await probeCtx.setSinkId(deviceId);
+           // Handling OS recognition lag
+           await new Promise(r => setTimeout(r, 400));
+         }
+         currentMaxOutChannels = probeCtx.destination.maxChannelCount;
+         console.log(`Target device "${outputSelect.options[outputSelect.selectedIndex].text}" has ${currentMaxOutChannels} channels.`);
+
+         // Refresh current dropdowns if monitoring is active
+         const existingSelects = document.querySelectorAll('.route-select');
+         if (existingSelects.length > 0) {
+           updateAllRoutingSelects(currentMaxOutChannels);
+         }
+       } catch (e) {
+         console.error("Probing failed:", e);
+       } finally {
+         await probeCtx.close();
+       }
+     }
+
+     // (Refactor) Separate function to update DOM elements
+     function updateAllRoutingSelects(count) {
+       document.querySelectorAll('.route-select').forEach(sel => {
+         const prev = sel.value;
+         let opts = `<option value="-1">(none)</option>`;
+         for (let o = 0; o < count; o++) opts += `<option value="${o}">OUT ${o + 1}</option>`;
+         sel.innerHTML = opts;
+         if (parseInt(prev) < count) sel.value = prev;
+         else sel.value = "-1";
+       });
+     }
+
+     // Trigger probe right after updated the device selection
+     outputSelect.onchange = async () => {
+       startBtn.disabled = true;
+       startBtn.textContent = "PROBING DEVICE...";
+       await probeSelectedOutput();
+       startBtn.disabled = false;
+       startBtn.textContent = audioCtx ? "RESTART / UPDATE" : "START MONITORING";
+     };
+
      refreshDevices();
 
+     // 4. Playback processing
      startBtn.onclick = async () => {
        if (audioCtx) {
          await audioCtx.close();
@@ -274,19 +327,25 @@
          container.innerHTML = '';
        }
 
-       audioCtx = new AudioContext({ latencyHint: 'interactive' });
+       audioCtx = new AudioContext({ latencyHint: 'interactive', sampleRate: 48000 });
        const outDeviceId = outputSelect.value;
-       if (outDeviceId && typeof audioCtx.setSinkId === 'function') { await audioCtx.setSinkId(outDeviceId); }
 
-       const outMaxChannels = audioCtx.destination.maxChannelCount;
-       audioCtx.destination.channelCount = outMaxChannels;
+       if (outDeviceId && typeof audioCtx.setSinkId === 'function') {
+         await audioCtx.setSinkId(outDeviceId);
+         await new Promise(r => setTimeout(r, 300));
+       }
+
+       // Ensure configuration is committed on start
+       currentMaxOutChannels = audioCtx.destination.maxChannelCount;
+       audioCtx.destination.channelCount = currentMaxOutChannels;
+       audioCtx.destination.channelCountMode = 'explicit';
        audioCtx.destination.channelInterpretation = "discrete";
 
        try {
          const stream = await navigator.mediaDevices.getUserMedia({
            audio: {
              deviceId: { exact: inputSelect.value },
-             channelCount: 32,
+             channelCount: 32, // Over-provision for future-proofing
              echoCancellation: false, noiseSuppression: false, autoGainControl: false
            }
          });
@@ -297,30 +356,28 @@
          source.channelInterpretation = "discrete";
 
          const inSplitter = audioCtx.createChannelSplitter(inChannels);
-         const outMerger = audioCtx.createChannelMerger(outMaxChannels);
+         const outMerger = audioCtx.createChannelMerger(32);
          source.connect(inSplitter);
          outMerger.connect(audioCtx.destination);
 
          const meters = [];
-         const host_path = `//${window.location.hostname}:${window.location.port}${window.location.pathname.split('/').slice(0, -1).join('/')}`
+         const host_path = `//${window.location.hostname}:${window.location.port}${window.location.pathname.split('/').slice(0, -1).join('/')}`;
 
          for (let i = 0; i < inChannels; i++) {
+           // --- Node Setup ---
            const preGain = audioCtx.createGain();
-           const highFilter = audioCtx.createBiquadFilter(); highFilter.type = 'highshelf'; highFilter.frequency.value = 10000;
-           const midFilter = audioCtx.createBiquadFilter(); midFilter.type = 'peaking'; midFilter.frequency.value = 2500;
-           const lowFilter = audioCtx.createBiquadFilter(); lowFilter.type = 'lowshelf'; lowFilter.frequency.value = 100;
+           const highFilter = audioCtx.createBiquadFilter(); highFilter.type = 'highshelf';
+           const midFilter = audioCtx.createBiquadFilter(); midFilter.type = 'peaking';
+           const lowFilter = audioCtx.createBiquadFilter(); lowFilter.type = 'lowshelf';
            const channelGain = audioCtx.createGain();
            const analyser = audioCtx.createAnalyser();
            analyser.fftSize = 512;
-           analyser.smoothingTimeConstant = 0.4;
 
            inSplitter.connect(preGain, i);
-           preGain.connect(highFilter);
-           highFilter.connect(midFilter);
-           midFilter.connect(lowFilter);
-           lowFilter.connect(channelGain);
-           lowFilter.connect(analyser);
+           preGain.connect(highFilter); highFilter.connect(midFilter); midFilter.connect(lowFilter);
+           lowFilter.connect(channelGain); lowFilter.connect(analyser);
 
+           // --- UI Setup ---
            const wrapper = document.createElement('div');
            wrapper.className = 'channel-wrapper';
            wrapper.innerHTML = `
@@ -356,8 +413,11 @@
            const muteBtn = document.getElementById(`mute-btn-${i}`);
            const meterBg = document.getElementById(`meter-bg-${i}`);
 
+           // Build routing options using the confirmed currentMaxOutChannels
            let opts = `<option value="-1">(none)</option>`;
-           for(let o=0; o < outMaxChannels; o++) opts += `<option value="${o}">OUT ${o+1}</option>`;
+           for (let o = 0; o < currentMaxOutChannels; o++) {
+             opts += `<option value="${o}">OUT ${o + 1}</option>`;
+           }
            routeSelect.innerHTML = opts;
 
            let isMutedByBtn = false;
@@ -374,8 +434,12 @@
              updateMuteState();
            };
 
-           if (i < outMaxChannels) { routeSelect.value = i; channelGain.connect(outMerger, 0, i); }
-           else { routeSelect.value = "-1"; }
+           if (i < currentMaxOutChannels) {
+             routeSelect.value = i;
+             channelGain.connect(outMerger, 0, i);
+           } else {
+             routeSelect.value = "-1";
+           }
            updateMuteState();
 
            routeSelect.onchange = () => {
@@ -385,28 +449,19 @@
              updateMuteState();
            };
 
+           // Knob binding...
            const bindKnob = (id, param, txtId, isGain = false) => {
              const s = document.getElementById(id);
              const t = document.getElementById(txtId);
-
-             const updateValue = (val) => {
-               if (isGain) {
-                 const linearGain = Math.pow(10, val / 20);
-                 param.setTargetAtTime(linearGain, audioCtx.currentTime, 0.01);
-               } else {
-                 param.setTargetAtTime(val, audioCtx.currentTime, 0.01);
-               }
+             const updateVal = (v) => {
+               const val = parseFloat(v);
+               if (isGain) param.setTargetAtTime(Math.pow(10, val / 20), audioCtx.currentTime, 0.01);
+               else param.setTargetAtTime(val, audioCtx.currentTime, 0.01);
                t.innerText = `${val > 0 ? '+' : ''}${val}dB`;
              };
-
-             s.oninput = (e) => updateValue(parseFloat(e.target.value));
-
-             s.ondblclick = () => {
-               s.value = 0;
-               updateValue(0);
-             };
+             s.oninput = (e) => updateVal(e.target.value);
+             s.ondblclick = () => { s.value = 0; updateVal(0); };
            };
-
            bindKnob(`gain-${i}`, preGain.gain, `txt-gain-${i}`, true);
            bindKnob(`hi-${i}`, highFilter.gain, `txt-hi-${i}`);
            bindKnob(`mid-${i}`, midFilter.gain, `txt-mid-${i}`);
@@ -415,20 +470,19 @@
            meters.push({ analyser, data: new Uint8Array(analyser.frequencyBinCount), element: document.getElementById(`fill-${i}`), textElement: document.getElementById(`val-${i}`) });
          }
 
-         const update = () => {
+         const updateLoop = () => {
            meters.forEach(m => {
              m.analyser.getByteFrequencyData(m.data);
-             const avg = m.data.reduce((a, b) => a + b) / m.data.length;
+             const avg = m.data.reduce((a, b) => a + b) / m.data.length || 0;
              const volumePercent = Math.min(100, (avg / 150) * 100);
              m.element.style.clipPath = `inset(${100 - volumePercent}% 0 0 0)`;
              const db = avg > 0 ? Math.round(20 * Math.log10(avg / 255)) : -Infinity;
              m.textElement.textContent = db === -Infinity ? "-inf" : `${db} dB`;
            });
-           animationId = requestAnimationFrame(update);
+           animationId = requestAnimationFrame(updateLoop);
          };
-         update();
+         updateLoop();
          startBtn.textContent = "RESTART / UPDATE";
-
        } catch (err) { alert("Error: " + err); }
      };
     </script>
