@@ -8,83 +8,83 @@
      body {
        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
        background: #cbd5e0;
-       color: #2d3748; 
+       color: #2d3748;
        display: flex;
-       flex-direction: column; 
+       flex-direction: column;
        align-items: center;
-       justify-content: center; 
+       justify-content: center;
        min-height: 100vh;
        margin: 0;
      }
 
      .container {
-       background: #ffffff; 
-       padding: 40px; 
+       background: #ffffff;
+       padding: 40px;
        border-radius: 20px;
-       box-shadow: 0 20px 60px rgba(0,0,0,0.15); 
+       box-shadow: 0 20px 60px rgba(0,0,0,0.15);
        border: 1px solid rgba(0,0,0,0.05);
-       width: 90%; 
-       max-width: 500px; 
+       width: 90%;
+       max-width: 500px;
        text-align: center;
      }
 
-     h1 { 
+     h1 {
        color: #1a202c;
-       font-size: 1.6em; 
+       font-size: 1.6em;
        margin-bottom: 30px;
-       border-bottom: 2px solid #edf2f7; 
+       border-bottom: 2px solid #edf2f7;
        padding-bottom: 15px;
        letter-spacing: -0.5px;
        font-weight: 800;
      }
 
      .tool-link {
-       display: flex; 
-       align-items: center; 
+       display: flex;
+       align-items: center;
        text-decoration: none;
-       color: inherit; 
-       background: #f8fafc; 
+       color: inherit;
+       background: #f8fafc;
        padding: 20px;
-       border-radius: 12px; 
+       border-radius: 12px;
        margin-bottom: 16px;
        transition: all 0.2s ease;
-       border: 1px solid #e2e8f0; 
+       border: 1px solid #e2e8f0;
        text-align: left;
      }
 
-     .tool-link:hover { 
-       transform: translateY(-4px); 
-       background: #fff; 
-       border-color: #1a202c; 
-       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2); 
+     .tool-link:hover {
+       transform: translateY(-4px);
+       background: #fff;
+       border-color: #1a202c;
+       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
      }
 
-     .icon { 
-       font-size: 2.2em; 
-       margin-right: 20px; 
-       min-width: 50px; 
+     .icon {
+       font-size: 2.2em;
+       margin-right: 20px;
+       min-width: 50px;
        text-align: center;
      }
 
-     .details h2 { 
-       margin: 0 0 4px 0; 
-       font-size: 1.15em; 
+     .details h2 {
+       margin: 0 0 4px 0;
+       font-size: 1.15em;
        color: #2d3748;
        font-weight: 700;
      }
 
-     .details p { 
-       margin: 0; 
-       font-size: 0.88em; 
-       color: #4a5568; 
-       line-height: 1.5; 
+     .details p {
+       margin: 0;
+       font-size: 0.88em;
+       color: #4a5568;
+       line-height: 1.5;
      }
 
-     .footer { 
-       margin-top: 25px; 
-       font-size: 0.75em; 
-       color: #718096; 
-       font-family: 'SFMono-Regular', Consolas, monospace; 
+     .footer {
+       margin-top: 25px;
+       font-size: 0.75em;
+       color: #718096;
+       font-family: 'SFMono-Regular', Consolas, monospace;
        letter-spacing: 0.5px;
      }
     </style>
@@ -94,6 +94,14 @@
     <div class="container">
       <h1>Web Audio Toolset</h1>
 
+      <a href="audio_diagnostic.html" class="tool-link">
+        <div class="icon">🔍</div>
+        <div class="details">
+          <h2>Hardware Diagnostic</h2>
+          <p>Identify maximum multi-channel capabilities of your audio interfaces by bypassing browser DSP.</p>
+        </div>
+      </a>
+
       <a href="input_levelmeter_routing.html" class="tool-link">
         <div class="icon">🎚️</div>
         <div class="details">
@@ -102,11 +110,11 @@
         </div>
       </a>
 
-      <a href="output_max8ch.html" class="tool-link">
+      <a href="output_max10ch.html" class="tool-link">
         <div class="icon">🎹</div>
         <div class="details">
-          <h2>8ch Output Tester</h2>
-          <p>Confirm multi-channel output functionality by playing scales from CH 1 to 8.</p>
+          <h2>10ch Output Tester</h2>
+          <p>Confirm multi-channel output functionality by playing scales from CH 1 to 10.</p>
         </div>
       </a>
 
